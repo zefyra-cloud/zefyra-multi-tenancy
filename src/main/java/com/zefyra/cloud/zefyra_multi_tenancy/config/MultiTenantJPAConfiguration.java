@@ -78,6 +78,7 @@ public class MultiTenantJPAConfiguration {
         hibernateProperties.put("hibernate.temp.use_jdbc_metadata_defaults", false);
 
         LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
+        entityManagerFactoryBean.setPackagesToScan("com.zefyra.cloud");
         entityManagerFactoryBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         entityManagerFactoryBean.setJpaPropertyMap(hibernateProperties);
         return entityManagerFactoryBean;
