@@ -1,0 +1,86 @@
+package com.zefyra.cloud.zefyra_multi_tenancy.config;
+
+
+
+import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.DataSourceMultiTenantConnectionProvider;
+import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.TenantIdentifierResolver;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
+import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import javax.sql.DataSource;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+@Configuration
+@EnableConfigurationProperties({ JpaProperties.class })
+@EnableTransactionManagement
+public class MultiTenantJPAConfiguration {
+
+    @Autowired
+    private JpaProperties jpaProperties;
+
+
+    @Autowired
+    private DataSourceMultiTenantConnectionProvider dataSourceMultiTenantConnectionProvider;
+
+    @Bean
+    public MultiTenantConnectionProvider<String> multiTenantConnectionProvider() {
+        return new DataSourceMultiTenantConnectionProvider();
+    }
+
+    @Bean
+    public TenantIdentifierResolver currentTenantIdentifierResolver() {
+        return new TenantIdentifierResolver();
+    }
+
+    @Bean(name = "multipleDataSources")
+    public Map<String, DataSource> repositoryDataSources() {
+        return dataSourceMultiTenantConnectionProvider.getDataSources();
+    }
+
+    @Bean
+    public EntityManagerFactory entityManagerFactory(LocalContainerEntityManagerFactoryBean entityManagerFactoryBean) {
+        return entityManagerFactoryBean.getObject();
+    }
+
+    @Bean
+    public PlatformTransactionManager multiTenantTxManager(EntityManagerFactory entityManagerFactory) {
+        JpaTransactionManager transactionManager = new JpaTransactionManager();
+        transactionManager.setEntityManagerFactory(entityManagerFactory);
+        return transactionManager;
+    }
+
+    @Bean
+    public LocalContainerEntityManagerFactoryBean entityManagerFactoryBean(
+            MultiTenantConnectionProvider<String> multiTenantConnectionProvider,
+            CurrentTenantIdentifierResolver<String> currentTenantIdentifierResolver) {
+
+        Map<String, Object> hibernateProperties = new LinkedHashMap<>(this.jpaProperties.getProperties());
+        hibernateProperties.put("hibernate.multiTenancy", "DATABASE");
+        hibernateProperties.put(AvailableSettings.MULTI_TENANT_CONNECTION_PROVIDER, multiTenantConnectionProvider);
+        hibernateProperties.put(AvailableSettings.MULTI_TENANT_IDENTIFIER_RESOLVER, currentTenantIdentifierResolver);
+
+        // 👇 Aggiungi queste due proprietà fondamentali
+        hibernateProperties.put(AvailableSettings.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
+        hibernateProperties.put("hibernate.temp.use_jdbc_metadata_defaults", false);
+
+        LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
+        entityManagerFactoryBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+        entityManagerFactoryBean.setJpaPropertyMap(hibernateProperties);
+        return entityManagerFactoryBean;
+    }
+
+}
