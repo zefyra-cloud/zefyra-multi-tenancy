@@ -9,6 +9,7 @@ import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -19,6 +20,7 @@ import java.sql.Connection;
 import java.util.List;
 
 @Component
+@Slf4j
 public class TenantLiquibaseRunner implements ApplicationRunner {
 
     @Autowired
@@ -46,13 +48,21 @@ public class TenantLiquibaseRunner implements ApplicationRunner {
 
     @SneakyThrows
     private void runLiquibase(DataSource dataSource) {
+        ClassLoader classLoader = getClass().getClassLoader();
+        String changelogPath = "db/changelog/db.changelog-master.yaml";
+
+        if (classLoader.getResource(changelogPath) == null) {
+            log.info("Liquibase changelog file not found: {}. Skipping migration.", changelogPath);
+            return;
+        }
+
         try (Connection connection = dataSource.getConnection()) {
             Database database = DatabaseFactory.getInstance()
                     .findCorrectDatabaseImplementation(new JdbcConnection(connection));
             database.setDefaultSchemaName("public");
 
             Liquibase liquibase = new Liquibase(
-                    "db/changelog/db.changelog-master.yaml",
+                    changelogPath,
                     new ClassLoaderResourceAccessor(),
                     database
             );
