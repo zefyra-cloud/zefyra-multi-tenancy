@@ -33,6 +33,9 @@ public class DatasourceUtils {
     @Value("${tenants.master.password}")
     private String masterPassword;
 
+    @Value("${tenants.master.schema}")
+    private String masterSchema;
+
     private static final String QUERY = "SELECT tenant_id, url, username, password FROM tenants";
 
     @SneakyThrows
@@ -50,7 +53,7 @@ public class DatasourceUtils {
     @SneakyThrows
     public List<TenantInfo> loadAllTenants() throws SQLException {
 
-        String connectionURL = getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName);
+        String connectionURL = getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, masterSchema);
 
         Connection conn = DriverManager.getConnection(connectionURL, masterUsername, masterPassword);
         PreparedStatement stmt = conn.prepareStatement(QUERY);
@@ -84,8 +87,8 @@ public class DatasourceUtils {
                 .build();
     }
 
-    private String getJdbcUrl(String masterJdbcPrefix, String masterUrl, String masterPort, String masterDatabaseName) {
-        return String.format("%s://%s:%s/%s", masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName);
+    private String getJdbcUrl(String jdbcPrefix, String host, String port, String dbName, String schema) {
+        return String.format("%s://%s:%s/%s?currentSchema=%s", jdbcPrefix, host, port, dbName, schema);
     }
 
     public record TenantInfo(String tenantId, String url, String username, String password) {}
