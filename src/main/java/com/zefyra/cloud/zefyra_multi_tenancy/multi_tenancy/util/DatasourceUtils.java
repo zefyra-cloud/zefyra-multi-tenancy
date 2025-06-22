@@ -36,45 +36,50 @@ public class DatasourceUtils {
     @Value("${tenants.master.schema}")
     private String masterSchema;
 
-    private static final String QUERY = "SELECT tenant_id, host_url, username, password FROM tenants";
+    private static final String COLUMN_TENANT_ID = "tenant_id";
+    private static final String COLUMN_URL = "host_url";
+    private static final String COLUMN_USERNAME = "username";
+    private static final String COLUMN_PASSWORD = "password";
+
+    private static final String TABLE_TENANTS = "tenants";
+
+    private static final String QUERY = String.format(
+            "SELECT %s, %s, %s, %s FROM %s",
+            COLUMN_TENANT_ID, COLUMN_URL, COLUMN_USERNAME, COLUMN_PASSWORD, TABLE_TENANTS
+    );
 
     @SneakyThrows
     public Map<String, DataSource> loadAllTenantDataSources() {
-
         Map<String, DataSource> dataSources = new HashMap<>();
-
         loadAllTenants().forEach(tenant ->
                 dataSources.put(tenant.tenantId(), createDataSource(tenant.url(), tenant.username(), tenant.password()))
         );
-
         return dataSources;
     }
 
     @SneakyThrows
     public List<TenantInfo> loadAllTenants() throws SQLException {
-
         String connectionURL = getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, masterSchema);
 
-        Connection conn = DriverManager.getConnection(connectionURL, masterUsername, masterPassword);
-        PreparedStatement stmt = conn.prepareStatement(QUERY);
-        ResultSet rs = stmt.executeQuery();
-
-        List<TenantInfo> tenantInfos = new ArrayList<>();
-
-        while (rs.next()) {
-            TenantInfo tenant = extractTenantInfo(rs);
-            tenantInfos.add(tenant);
+        try (
+                Connection conn = DriverManager.getConnection(connectionURL, masterUsername, masterPassword);
+                PreparedStatement stmt = conn.prepareStatement(QUERY);
+                ResultSet rs = stmt.executeQuery()
+        ) {
+            List<TenantInfo> tenantInfos = new ArrayList<>();
+            while (rs.next()) {
+                tenantInfos.add(extractTenantInfo(rs));
+            }
+            return tenantInfos;
         }
-
-        return tenantInfos;
     }
 
     private TenantInfo extractTenantInfo(ResultSet rs) throws SQLException {
         return new TenantInfo(
-                rs.getString("tenant_id"),
-                rs.getString("host_url"),
-                rs.getString("username"),
-                rs.getString("password")
+                rs.getString(COLUMN_TENANT_ID),
+                rs.getString(COLUMN_URL),
+                rs.getString(COLUMN_USERNAME),
+                rs.getString(COLUMN_PASSWORD)
         );
     }
 
