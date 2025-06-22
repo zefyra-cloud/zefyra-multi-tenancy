@@ -36,7 +36,7 @@ public class DatasourceUtils {
     @Value("${tenants.master.schema}")
     private String masterSchema;
 
-    private static final String QUERY = "SELECT tenant_id, url, username, password FROM tenants";
+    private static final String QUERY = "SELECT tenant_id, host_url, username, password FROM tenants";
 
     @SneakyThrows
     public Map<String, DataSource> loadAllTenantDataSources() {
@@ -72,7 +72,7 @@ public class DatasourceUtils {
     private TenantInfo extractTenantInfo(ResultSet rs) throws SQLException {
         return new TenantInfo(
                 rs.getString("tenant_id"),
-                rs.getString("url"),
+                rs.getString("host_url"),
                 rs.getString("username"),
                 rs.getString("password")
         );
