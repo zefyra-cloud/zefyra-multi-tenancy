@@ -28,13 +28,14 @@ public class TenantLiquibaseRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-
         List<DatasourceUtils.TenantInfo> tenants = datasourceUtils.loadAllTenants();
 
-        for (DatasourceUtils.TenantInfo tenant : tenants) {
-            DataSource dataSource = createDataSourceForTenant(tenant);
-            runLiquibase(dataSource);
-        }
+        tenants.stream()
+                .filter(t -> !t.tenantId().equalsIgnoreCase("master") && !t.tenantId().equalsIgnoreCase("system"))
+                .forEach(tenant -> {
+                    DataSource dataSource = createDataSourceForTenant(tenant);
+                    runLiquibase(dataSource);
+                });
     }
 
     private DataSource createDataSourceForTenant(DatasourceUtils.TenantInfo tenant) {
