@@ -1,6 +1,8 @@
 package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util;
 
+import com.zefyra.cloud.zefyra_multi_tenancy.repositories.TenantRepository;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,9 @@ public class DatasourceUtils {
     @Value("${tenants.master.schema}")
     private String masterSchema;
 
+    private static final String MASTER_SCHEMA = "master";
+    private static final String SYSTEM_SCHEMA = "system";
+
     private static final String COLUMN_TENANT_ID = "tenant_id";
     private static final String COLUMN_URL = "host_url";
     private static final String COLUMN_USERNAME = "username";
@@ -48,6 +53,9 @@ public class DatasourceUtils {
             COLUMN_TENANT_ID, COLUMN_URL, COLUMN_USERNAME, COLUMN_PASSWORD, TABLE_TENANTS
     );
 
+    @Autowired
+    private TenantRepository tenantRepository;
+
     @SneakyThrows
     public Map<String, DataSource> loadAllTenantDataSources() {
         Map<String, DataSource> dataSources = new HashMap<>();
@@ -59,41 +67,27 @@ public class DatasourceUtils {
 
     @SneakyThrows
     public List<TenantInfo> loadAllTenants() throws SQLException {
-        String connectionURL = getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, masterSchema);
 
-        List<TenantInfo> tenantInfos = new ArrayList<>();
+        List<TenantInfo> tenantInfos = new ArrayList<>(createDataSourceForZefyraDB());
 
-        try (
-                Connection conn = DriverManager.getConnection(connectionURL, masterUsername, masterPassword);
-                PreparedStatement stmt = conn.prepareStatement(QUERY);
-                ResultSet rs = stmt.executeQuery()
-        ) {
-            while (rs.next()) {
-                tenantInfos.add(extractTenantInfo(rs));
-            }
-        }
+        TenantContext.setTenantName(SYSTEM_SCHEMA);
 
-        tenantInfos.add(createSystemTenant());
+        tenantRepository.findAll().forEach(entity -> {
+            tenantInfos.add(new TenantInfo(
+                    entity.getTenantId(),
+                    entity.getHostUrl(),
+                    entity.getUsername(),
+                    entity.getPassword()
+            ));
+        });
 
         return tenantInfos;
     }
 
-    public TenantInfo createSystemTenant() {
-        return new TenantInfo(
-                "system",
-                getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, "system"),
-                masterUsername,
-                masterPassword
-        );
-    }
-
-
-    private TenantInfo extractTenantInfo(ResultSet rs) throws SQLException {
-        return new TenantInfo(
-                rs.getString(COLUMN_TENANT_ID),
-                rs.getString(COLUMN_URL),
-                rs.getString(COLUMN_USERNAME),
-                rs.getString(COLUMN_PASSWORD)
+    private List<TenantInfo> createDataSourceForZefyraDB() {
+        return List.of(
+                new TenantInfo(SYSTEM_SCHEMA, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, SYSTEM_SCHEMA), masterUsername, masterPassword),
+                new TenantInfo(MASTER_SCHEMA, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, MASTER_SCHEMA), masterUsername, masterPassword)
         );
     }
 
