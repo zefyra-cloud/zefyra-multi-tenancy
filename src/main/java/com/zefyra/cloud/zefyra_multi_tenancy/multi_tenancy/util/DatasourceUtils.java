@@ -61,18 +61,32 @@ public class DatasourceUtils {
     public List<TenantInfo> loadAllTenants() throws SQLException {
         String connectionURL = getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, masterSchema);
 
+        List<TenantInfo> tenantInfos = new ArrayList<>();
+
         try (
                 Connection conn = DriverManager.getConnection(connectionURL, masterUsername, masterPassword);
                 PreparedStatement stmt = conn.prepareStatement(QUERY);
                 ResultSet rs = stmt.executeQuery()
         ) {
-            List<TenantInfo> tenantInfos = new ArrayList<>();
             while (rs.next()) {
                 tenantInfos.add(extractTenantInfo(rs));
             }
-            return tenantInfos;
         }
+
+        tenantInfos.add(createSystemTenant());
+
+        return tenantInfos;
     }
+
+    public TenantInfo createSystemTenant() {
+        return new TenantInfo(
+                "system",
+                getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, "system"),
+                masterUsername,
+                masterPassword
+        );
+    }
+
 
     private TenantInfo extractTenantInfo(ResultSet rs) throws SQLException {
         return new TenantInfo(
