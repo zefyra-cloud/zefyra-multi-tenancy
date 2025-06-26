@@ -31,10 +31,6 @@ public class TenantInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler)
             throws Exception {
 
-        if (request.getRequestURI().startsWith("/repository-api/v1/github-webhooks")) {
-            return true;
-        }
-
         String tenantName = request.getHeader(TENANT_HEADER_NAME);
 
         if (tenantName == null || tenantName.isBlank()) {
