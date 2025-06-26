@@ -38,8 +38,7 @@ public class TenantInterceptor implements HandlerInterceptor {
         String tenantName = request.getHeader(TENANT_HEADER_NAME);
 
         if (tenantName == null || tenantName.isBlank()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing tenant header");
-            return false;
+            return true; // tenant mancante: ignora
         }
 
         if (!dataSourceProvider.containsTenant(tenantName)) {
@@ -47,14 +46,14 @@ public class TenantInterceptor implements HandlerInterceptor {
             dataSourceProvider.setDataSources(dataSources);
 
             if (!dataSourceProvider.containsTenant(tenantName)) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown tenant");
-                return false;
+                return true; // tenant non trovato: ignora
             }
         }
 
         TenantContext.setTenantName(tenantName);
         return true;
     }
+
 
     @Override
     public void postHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler,
