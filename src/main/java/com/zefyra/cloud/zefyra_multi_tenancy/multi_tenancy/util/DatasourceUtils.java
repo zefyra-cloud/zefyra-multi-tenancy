@@ -38,6 +38,7 @@ public class DatasourceUtils {
 
     private static final String MASTER_SCHEMA = "master";
     private static final String SYSTEM_SCHEMA = "system";
+    private static final String KEYCLOAK_SCHEMA = "keycloak";
 
     private static final String COLUMN_TENANT_ID = "tenant_id";
     private static final String COLUMN_URL = "host_url";
@@ -82,7 +83,8 @@ public class DatasourceUtils {
     private List<TenantInfo> createDataSourceForZefyraDB() {
         return List.of(
                 new TenantInfo(SYSTEM_SCHEMA, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, SYSTEM_SCHEMA), masterUsername, masterPassword),
-                new TenantInfo(MASTER_SCHEMA, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, MASTER_SCHEMA), masterUsername, masterPassword)
+                new TenantInfo(MASTER_SCHEMA, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, MASTER_SCHEMA), masterUsername, masterPassword),
+                new TenantInfo(KEYCLOAK_SCHEMA, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, KEYCLOAK_SCHEMA), masterUsername, masterPassword)
         );
     }
 
