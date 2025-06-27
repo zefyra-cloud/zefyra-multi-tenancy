@@ -58,6 +58,9 @@ public class TenantLiquibaseRunner implements ApplicationRunner {
         }
 
         try (Connection connection = dataSource.getConnection()) {
+            log.info("Running Liquibase on DB: {}", connection.getMetaData().getURL());
+            log.info("Username: {}", connection.getMetaData().getUserName());
+
             Database database = DatabaseFactory.getInstance()
                     .findCorrectDatabaseImplementation(new JdbcConnection(connection));
             database.setDefaultSchemaName("public");
