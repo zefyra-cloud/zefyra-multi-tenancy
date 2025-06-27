@@ -16,7 +16,9 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.net.URL;
 import java.sql.Connection;
+import java.util.Enumeration;
 import java.util.List;
 
 @Component
@@ -31,7 +33,9 @@ public class TenantLiquibaseRunner implements ApplicationRunner {
         List<DatasourceUtils.TenantInfo> tenants = datasourceUtils.loadAllTenants();
 
         tenants.stream()
-                .filter(t -> !t.tenantId().equalsIgnoreCase("master") && !t.tenantId().equalsIgnoreCase("system"))
+                .filter(t ->
+                        !t.tenantId().equalsIgnoreCase("master") && !t.tenantId().equalsIgnoreCase("system") && !t.tenantId().equalsIgnoreCase("keycloak")
+                )
                 .forEach(tenant -> {
                     DataSource dataSource = createDataSourceForTenant(tenant);
                     runLiquibase(dataSource);
@@ -49,10 +53,12 @@ public class TenantLiquibaseRunner implements ApplicationRunner {
 
     @SneakyThrows
     private void runLiquibase(DataSource dataSource) {
-        ClassLoader classLoader = getClass().getClassLoader();
-        String changelogPath = "db/changelog/db.changelog-master.yaml";
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        String changelogPath = "db.changelog/db.changelog-master.yaml";
 
-        if (classLoader.getResource(changelogPath) == null) {
+        URL resource = classLoader.getResource(changelogPath);
+
+        if (resource == null) {
             log.info("Liquibase changelog file not found: {}. Skipping migration.", changelogPath);
             return;
         }
