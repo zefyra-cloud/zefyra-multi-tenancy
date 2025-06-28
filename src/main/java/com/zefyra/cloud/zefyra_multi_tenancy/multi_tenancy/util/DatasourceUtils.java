@@ -1,5 +1,7 @@
 package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -98,12 +100,12 @@ public class DatasourceUtils {
     }
 
     private DataSource createDataSource(String url, String username, String password) {
-        return DataSourceBuilder.create()
-                .url(url)
-                .username(username)
-                .password(password)
-                .driverClassName("org.postgresql.Driver")
-                .build();
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(url);
+        config.setUsername(username);
+        config.setPassword(password);
+        config.setDriverClassName("org.postgresql.Driver");
+        return new HikariDataSource(config);
     }
 
     private String getJdbcUrl(String jdbcPrefix, String host, String port, String dbName, String schema) {

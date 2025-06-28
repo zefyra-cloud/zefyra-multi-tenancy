@@ -8,7 +8,7 @@ public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver
     @Override
     public String resolveCurrentTenantIdentifier() {
         String currentTenantName = TenantContext.getTenantName();
-        String DEFAULT_TENANT_NAME = "tenant1";
+        String DEFAULT_TENANT_NAME = "system";
         return (currentTenantName != null) ? currentTenantName : DEFAULT_TENANT_NAME;
     }
 
