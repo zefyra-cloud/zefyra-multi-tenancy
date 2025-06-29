@@ -2,6 +2,7 @@ package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.interceptor;
 
 
 
+import com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantEnum;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.DataSourceMultiTenantConnectionProvider;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util.DatasourceUtils;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util.TenantContext;
@@ -12,14 +13,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
+import com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantEnum.*;
 
 import javax.sql.DataSource;
 import java.util.Map;
 
+import static com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantEnum.TENANT_HEADER;
+
 @Component
 public class TenantInterceptor implements HandlerInterceptor {
 
-    private static final String TENANT_HEADER_NAME = "TENANT-NAME";
 
     @Autowired
     private DataSourceMultiTenantConnectionProvider dataSourceProvider;
@@ -31,10 +34,10 @@ public class TenantInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler)
             throws Exception {
 
-        String tenantName = request.getHeader(TENANT_HEADER_NAME);
+        String tenantName = request.getHeader(TENANT_HEADER.getValue());
 
         if (tenantName == null || tenantName.isBlank()) {
-            return true; // tenant mancante: ignora
+            return true;
         }
 
         if (!dataSourceProvider.containsTenant(tenantName)) {
@@ -42,7 +45,7 @@ public class TenantInterceptor implements HandlerInterceptor {
             dataSourceProvider.setDataSources(dataSources);
 
             if (!dataSourceProvider.containsTenant(tenantName)) {
-                return true; // tenant non trovato: ignora
+                return true;
             }
         }
 
