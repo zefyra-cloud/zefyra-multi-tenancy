@@ -31,7 +31,6 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
     @Autowired
     private TenantEvictionProperties evictionProperties;
 
-
     @Override
     public DataSource selectAnyDataSource() {
         if (dataSources.isEmpty()) {
@@ -49,6 +48,7 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
         DataSource ds = timed.getDataSource();
         log.info("Using tenant '{}'", tenantIdentifier);
+
         try (Connection conn = ds.getConnection()) {
             log.info("Connected to DB URL: {}", conn.getMetaData().getURL());
         } catch (SQLException e) {
@@ -73,18 +73,17 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
     @Scheduled(fixedDelayString = "${tenants.eviction.cleanupDelayMs}")
     public void cleanupUnusedDataSources() {
         long cutoff = System.currentTimeMillis() - evictionProperties.getMaxIdleMinutes() * 60 * 1000;
-        log.info("Cleaning up unused DataSources");
+        log.info("Running cleanup of unused DataSources...");
 
         dataSources.entrySet().removeIf(entry -> {
             String tenantId = entry.getKey();
+            TimedDataSource ds = entry.getValue();
 
-            if (isProtectedTenant(tenantId)) {
-                return false;
-            }
+            if (isProtectedTenant(tenantId)) return false;
 
-            if (entry.getValue().getLastAccess() < cutoff) {
-                log.info("Closing unused DataSource for tenant '{}'", tenantId);
-                entry.getValue().close();
+            if (ds.shouldRemove(cutoff)) {
+                log.info("Closing and removing unused DataSource for tenant '{}'", tenantId);
+                ds.close();
                 return true;
             }
             return false;
@@ -92,15 +91,16 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
     }
 
     private boolean isProtectedTenant(String tenantId) {
-        return tenantId.equalsIgnoreCase(TenantEnum.MASTER.getValue())
-                || tenantId.equalsIgnoreCase(TenantEnum.SYSTEM.getValue())
-                || tenantId.equalsIgnoreCase(TenantEnum.KEYCLOAK.getValue());
+        return tenantId.equalsIgnoreCase(TenantEnum.MASTER.getValue()) ||
+                tenantId.equalsIgnoreCase(TenantEnum.SYSTEM.getValue()) ||
+                tenantId.equalsIgnoreCase(TenantEnum.KEYCLOAK.getValue());
     }
 
     public static class TimedDataSource {
         private final DataSource dataSource;
         @Getter
         private volatile long lastAccess;
+        private volatile boolean markedForRemoval = false;
 
         public TimedDataSource(DataSource dataSource) {
             this.dataSource = dataSource;
@@ -109,7 +109,19 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
         public DataSource getDataSource() {
             this.lastAccess = System.currentTimeMillis();
+            this.markedForRemoval = false; // resetto il flag se qualcuno lo usa di nuovo
             return dataSource;
+        }
+
+        public boolean shouldRemove(long cutoff) {
+            if (lastAccess < cutoff) {
+                if (markedForRemoval) {
+                    return true; // confermato: possiamo chiudere
+                } else {
+                    markedForRemoval = true; // prima volta che lo troviamo idle
+                }
+            }
+            return false;
         }
 
         public void close() {
