@@ -38,11 +38,6 @@ public class MultiTenantJPAConfiguration {
     @Autowired
     private MultiTenantConnectionProvider<String> connectionProvider;
 
-    @Bean
-    public TenantIdentifierResolver currentTenantIdentifierResolver() {
-        return new TenantIdentifierResolver();
-    }
-
     @Bean(name = "multipleDataSources")
     public Map<String, DataSource> repositoryDataSources() {
         return dataSourceMultiTenantConnectionProvider.getDataSources().entrySet().stream()

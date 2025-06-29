@@ -13,7 +13,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
-import java.io.Serial;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
@@ -25,9 +24,6 @@ import java.util.function.Supplier;
 @Service
 @Slf4j
 public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceBasedMultiTenantConnectionProviderImpl<String> {
-
-    @Serial
-    private static final long serialVersionUID = 1L;
 
     @Setter
     private Map<String, TimedDataSource> dataSources = new ConcurrentHashMap<>();

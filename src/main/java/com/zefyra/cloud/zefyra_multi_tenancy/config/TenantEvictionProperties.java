@@ -10,5 +10,5 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "tenants.eviction")
 public class TenantEvictionProperties {
-    private long maxIdleMinutes = 30; // default di sicurezza
+    private long maxIdleMinutes = 30;
 }
