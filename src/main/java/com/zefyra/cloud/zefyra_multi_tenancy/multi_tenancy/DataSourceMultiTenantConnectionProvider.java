@@ -77,13 +77,12 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
     @Scheduled(fixedDelayString = "${tenants.eviction.cleanupDelayMs}")
     public void cleanupUnusedDataSources() {
         long cutoff = System.currentTimeMillis() - evictionProperties.getMaxIdleMinutes() * 60 * 1000;
+        log.info("Cleaning up unused DataSources");
 
         dataSources.entrySet().removeIf(entry -> {
             String tenantId = entry.getKey();
 
-            // Evita di chiudere i tenant fissi
             if (isProtectedTenant(tenantId)) {
-                log.info("Skipping protected tenant '{}'", tenantId);
                 return false;
             }
 
