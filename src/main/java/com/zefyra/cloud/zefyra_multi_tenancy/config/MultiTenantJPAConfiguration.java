@@ -35,10 +35,8 @@ public class MultiTenantJPAConfiguration {
     @Autowired
     private DataSourceMultiTenantConnectionProvider dataSourceMultiTenantConnectionProvider;
 
-    @Bean
-    public MultiTenantConnectionProvider<String> multiTenantConnectionProvider() {
-        return new DataSourceMultiTenantConnectionProvider();
-    }
+    @Autowired
+    private MultiTenantConnectionProvider<String> connectionProvider;
 
     @Bean
     public TenantIdentifierResolver currentTenantIdentifierResolver() {
