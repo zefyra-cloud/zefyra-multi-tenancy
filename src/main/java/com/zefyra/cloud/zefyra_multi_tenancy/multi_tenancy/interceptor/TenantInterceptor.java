@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
-import com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantEnum.*;
 
 import javax.sql.DataSource;
 import java.util.Map;

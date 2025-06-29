@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
+import java.io.Serial;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
@@ -18,6 +19,7 @@ import java.util.Map;
 @Slf4j
 public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceBasedMultiTenantConnectionProviderImpl<String> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Setter
