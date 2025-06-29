@@ -37,14 +37,11 @@ public class TenantInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        if (!dataSourceProvider.containsTenant(tenantName)) {
-            Map<String, DataSource> dataSources = datasourceUtils.loadAllTenantDataSources();
-            dataSourceProvider.setDataSources(dataSources);
 
-            if (!dataSourceProvider.containsTenant(tenantName)) {
-                return true;
-            }
-        }
+        dataSourceProvider.addDataSourceIfAbsent(tenantName, () -> {
+            var entry = datasourceUtils.loadTenant(tenantName);
+            return entry.getValue();
+        });
 
         TenantContext.setTenantName(tenantName);
         return true;

@@ -12,6 +12,8 @@ import java.io.Serial;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 @Getter
 @Primary
@@ -23,11 +25,11 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
     private static final long serialVersionUID = 1L;
 
     @Setter
-    private Map<String, DataSource> dataSources;
+    private Map<String, DataSource> dataSources = new ConcurrentHashMap<>();
 
     @Override
     public DataSource selectAnyDataSource() {
-        if (dataSources == null || dataSources.isEmpty()) {
+        if (dataSources.isEmpty()) {
             throw new RuntimeException("No DataSources configured");
         }
         return dataSources.values().iterator().next();
@@ -35,15 +37,11 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
     @Override
     public DataSource selectDataSource(String tenantIdentifier) {
-        if (dataSources == null) {
-            throw new RuntimeException("No DataSources configured");
-        }
         DataSource ds = dataSources.get(tenantIdentifier);
         if (ds == null) {
             throw new RuntimeException("Unknown tenant " + tenantIdentifier);
         }
 
-        // Logga info sul DB selezionato
         log.info("Using tenant '{}'", tenantIdentifier);
         try (Connection conn = ds.getConnection()) {
             log.info("Connected to DB URL: {}", conn.getMetaData().getURL());
@@ -52,6 +50,14 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
         }
 
         return ds;
+    }
+
+    public void addDataSourceIfAbsent(String tenantId, Supplier<DataSource> supplier) {
+        dataSources.computeIfAbsent(tenantId, id -> {
+            log.info("Creating DataSource for tenant '{}'", id);
+            return supplier.get();
+        });
+        log.info("Ensured DataSource for tenant '{}'", tenantId);
     }
 
     public boolean containsTenant(String tenantId) {

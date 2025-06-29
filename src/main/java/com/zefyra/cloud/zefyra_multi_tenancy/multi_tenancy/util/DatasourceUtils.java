@@ -81,6 +81,42 @@ public class DatasourceUtils {
         return tenantInfos;
     }
 
+    @SneakyThrows
+    public Map<String, DataSource> loadSystemDefaultTenantsDataSources() {
+        Map<String, DataSource> dataSources = new HashMap<>();
+        loadSystemDefaultTenants().forEach(tenant ->
+                dataSources.put(tenant.tenantId(), createDataSource(tenant.url(), tenant.username(), tenant.password()))
+        );
+        return dataSources;
+    }
+
+    @SneakyThrows
+    public List<TenantInfo> loadSystemDefaultTenants() throws SQLException {
+        return new ArrayList<>(createDataSourceForZefyraDB());
+    }
+
+    @SneakyThrows
+    public Map.Entry<String, DataSource> loadTenant(String tenantId) {
+        String connectionURL = getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, masterSchema);
+        String singleQuery = QUERY + " WHERE " + COLUMN_TENANT_ID + " = ?";
+
+        try (
+                Connection conn = DriverManager.getConnection(connectionURL, masterUsername, masterPassword);
+                PreparedStatement stmt = conn.prepareStatement(singleQuery)
+        ) {
+            stmt.setString(1, tenantId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    TenantInfo info = extractTenantInfo(rs);
+                    DataSource ds = createDataSource(info.url(), info.username(), info.password());
+                    return Map.entry(info.tenantId(), ds);
+                } else {
+                    throw new IllegalArgumentException("Tenant not found: " + tenantId);
+                }
+            }
+        }
+    }
+
     private List<TenantInfo> createDataSourceForZefyraDB() {
         return List.of(
                 new TenantInfo(SYSTEM_SCHEMA, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, SYSTEM_SCHEMA), masterUsername, masterPassword),

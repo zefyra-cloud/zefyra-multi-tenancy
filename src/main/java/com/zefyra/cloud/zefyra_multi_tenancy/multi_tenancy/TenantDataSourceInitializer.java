@@ -20,7 +20,7 @@ public class TenantDataSourceInitializer {
 
     @PostConstruct
     public void loadTenants() {
-        Map<String, DataSource> dataSources = datasourceUtils.loadAllTenantDataSources();
+        Map<String, DataSource> dataSources = datasourceUtils.loadSystemDefaultTenantsDataSources();
         connectionProvider.setDataSources(dataSources);
     }
 
