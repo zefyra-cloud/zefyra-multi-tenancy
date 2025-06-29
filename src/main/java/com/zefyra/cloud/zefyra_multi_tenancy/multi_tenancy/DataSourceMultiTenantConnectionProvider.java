@@ -47,10 +47,10 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
         }
 
         DataSource ds = timed.getDataSource();
-        log.info("Using tenant '{}'", tenantIdentifier);
+        log.debug("Using tenant '{}'", tenantIdentifier);
 
         try (Connection conn = ds.getConnection()) {
-            log.info("Connected to DB URL: {}", conn.getMetaData().getURL());
+            log.debug("Connected to DB URL: {}", conn.getMetaData().getURL());
         } catch (SQLException e) {
             log.warn("Could not get connection metadata", e);
         }
@@ -60,14 +60,10 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
     public void addDataSourceIfAbsent(String tenantId, Supplier<DataSource> supplier) {
         dataSources.computeIfAbsent(tenantId, id -> {
-            log.info("Creating DataSource for tenant '{}'", id);
+            log.debug("Creating DataSource for tenant '{}'", id);
             return new TimedDataSource(supplier.get());
         });
-        log.info("Ensured DataSource for tenant '{}'", tenantId);
-    }
-
-    public boolean containsTenant(String tenantId) {
-        return dataSources.containsKey(tenantId);
+        log.debug("Ensured DataSource for tenant '{}'", tenantId);
     }
 
     @Scheduled(fixedDelayString = "${tenants.eviction.cleanupDelayMs}")
@@ -116,10 +112,10 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
         public boolean shouldRemove(long cutoff) {
             if (lastAccess < cutoff) {
                 if (markedForRemoval) {
-                    log.info("DataSource for tenant is marked for removal and last accessed at {} ms ago", System.currentTimeMillis() - lastAccess);
+                    log.debug("DataSource for tenant is marked for removal and last accessed at {} ms ago", System.currentTimeMillis() - lastAccess);
                     return true; // confermato: possiamo chiudere
                 } else {
-                    log.info("DataSource for tenant last accessed at {} ms ago, marking for removal", System.currentTimeMillis() - lastAccess);
+                    log.debug("DataSource for tenant last accessed at {} ms ago, marking for removal", System.currentTimeMillis() - lastAccess);
                     markedForRemoval = true;
                 }
             }
