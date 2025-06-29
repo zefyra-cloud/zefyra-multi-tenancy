@@ -116,8 +116,10 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
         public boolean shouldRemove(long cutoff) {
             if (lastAccess < cutoff) {
                 if (markedForRemoval) {
+                    log.info("DataSource for tenant is marked for removal and last accessed at {} ms ago", System.currentTimeMillis() - lastAccess);
                     return true; // confermato: possiamo chiudere
                 } else {
+                    log.info("DataSource for tenant last accessed at {} ms ago, marking for removal", System.currentTimeMillis() - lastAccess);
                     markedForRemoval = true;
                 }
             }
