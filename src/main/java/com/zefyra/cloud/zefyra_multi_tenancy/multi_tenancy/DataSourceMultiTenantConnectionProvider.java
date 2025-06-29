@@ -2,6 +2,7 @@ package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy;
 
 import com.zaxxer.hikari.HikariDataSource;
 import com.zefyra.cloud.zefyra_multi_tenancy.config.TenantEvictionProperties;
+import com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -75,15 +76,32 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
     @Scheduled(fixedDelayString = "${tenants.eviction.cleanupDelayMs}")
     public void cleanupUnusedDataSources() {
+        System.out.println("SCHEDULED TASK TRIGGERED");
         long cutoff = System.currentTimeMillis() - evictionProperties.getMaxIdleMinutes() * 60 * 1000;
+        log.info("Cleaning up unused DataSources older than {} ms", cutoff);
+
         dataSources.entrySet().removeIf(entry -> {
+            String tenantId = entry.getKey();
+
+            // Evita di chiudere i tenant fissi
+            if (isProtectedTenant(tenantId)) {
+                log.info("Skipping protected tenant '{}'", tenantId);
+                return false;
+            }
+
             if (entry.getValue().getLastAccess() < cutoff) {
-                log.info("Closing unused DataSource for tenant '{}'", entry.getKey());
+                log.info("Closing unused DataSource for tenant '{}'", tenantId);
                 entry.getValue().close();
                 return true;
             }
             return false;
         });
+    }
+
+    private boolean isProtectedTenant(String tenantId) {
+        return tenantId.equalsIgnoreCase(TenantEnum.MASTER.getValue())
+                || tenantId.equalsIgnoreCase(TenantEnum.SYSTEM.getValue())
+                || tenantId.equalsIgnoreCase(TenantEnum.KEYCLOAK.getValue());
     }
 
     public static class TimedDataSource {
