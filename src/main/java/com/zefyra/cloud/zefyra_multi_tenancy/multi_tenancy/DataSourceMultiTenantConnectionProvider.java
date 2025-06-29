@@ -1,10 +1,12 @@
 package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy;
 
 import com.zaxxer.hikari.HikariDataSource;
+import com.zefyra.cloud.zefyra_multi_tenancy.config.TenantEvictionProperties;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.engine.jdbc.connections.spi.AbstractDataSourceBasedMultiTenantConnectionProviderImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,9 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
     @Setter
     private Map<String, TimedDataSource> dataSources = new ConcurrentHashMap<>();
+
+    @Autowired
+    private TenantEvictionProperties evictionProperties;
 
 
     @Override
@@ -68,9 +73,9 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
         return dataSources.containsKey(tenantId);
     }
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelayString = "${tenants.eviction.cleanupDelayMs}")
     public void cleanupUnusedDataSources() {
-        long cutoff = System.currentTimeMillis() - 30 * 60 * 1000; // 30 minuti
+        long cutoff = System.currentTimeMillis() - evictionProperties.getMaxIdleMinutes() * 60 * 1000;
         dataSources.entrySet().removeIf(entry -> {
             if (entry.getValue().getLastAccess() < cutoff) {
                 log.info("Closing unused DataSource for tenant '{}'", entry.getKey());
