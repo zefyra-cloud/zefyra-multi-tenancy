@@ -109,7 +109,7 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
         public DataSource getDataSource() {
             this.lastAccess = System.currentTimeMillis();
-            this.markedForRemoval = false; // resetto il flag se qualcuno lo usa di nuovo
+            this.markedForRemoval = false;
             return dataSource;
         }
 
@@ -118,7 +118,7 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
                 if (markedForRemoval) {
                     return true; // confermato: possiamo chiudere
                 } else {
-                    markedForRemoval = true; // prima volta che lo troviamo idle
+                    markedForRemoval = true;
                 }
             }
             return false;
