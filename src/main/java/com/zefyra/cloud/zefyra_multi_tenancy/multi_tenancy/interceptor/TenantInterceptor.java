@@ -1,8 +1,6 @@
 package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.interceptor;
 
 
-
-import com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantEnum;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.DataSourceMultiTenantConnectionProvider;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util.DatasourceUtils;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util.TenantContext;

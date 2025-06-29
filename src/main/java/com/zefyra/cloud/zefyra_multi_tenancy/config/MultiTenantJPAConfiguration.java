@@ -1,7 +1,6 @@
 package com.zefyra.cloud.zefyra_multi_tenancy.config;
 
 
-
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.DataSourceMultiTenantConnectionProvider;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.TenantIdentifierResolver;
 import jakarta.persistence.EntityManagerFactory;
@@ -13,7 +12,6 @@ import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
