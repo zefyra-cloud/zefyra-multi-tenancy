@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import javax.sql.DataSource;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableConfigurationProperties({ JpaProperties.class })
@@ -46,7 +47,11 @@ public class MultiTenantJPAConfiguration {
 
     @Bean(name = "multipleDataSources")
     public Map<String, DataSource> repositoryDataSources() {
-        return dataSourceMultiTenantConnectionProvider.getDataSources();
+        return dataSourceMultiTenantConnectionProvider.getDataSources().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().getDataSource()
+                ));
     }
 
     @Bean
