@@ -76,9 +76,7 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
     @Scheduled(fixedDelayString = "${tenants.eviction.cleanupDelayMs}")
     public void cleanupUnusedDataSources() {
-        System.out.println("SCHEDULED TASK TRIGGERED");
         long cutoff = System.currentTimeMillis() - evictionProperties.getMaxIdleMinutes() * 60 * 1000;
-        log.info("Cleaning up unused DataSources older than {} ms", cutoff);
 
         dataSources.entrySet().removeIf(entry -> {
             String tenantId = entry.getKey();
