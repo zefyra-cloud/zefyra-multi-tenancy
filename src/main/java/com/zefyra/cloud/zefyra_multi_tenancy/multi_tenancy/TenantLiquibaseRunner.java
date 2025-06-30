@@ -1,7 +1,5 @@
 package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util.DatasourceUtils;
 import liquibase.Liquibase;
 import liquibase.database.Database;

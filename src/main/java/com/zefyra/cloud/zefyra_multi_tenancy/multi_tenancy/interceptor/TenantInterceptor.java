@@ -12,9 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.sql.DataSource;
-import java.util.Map;
-
 import static com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantEnum.TENANT_HEADER;
 
 @Component

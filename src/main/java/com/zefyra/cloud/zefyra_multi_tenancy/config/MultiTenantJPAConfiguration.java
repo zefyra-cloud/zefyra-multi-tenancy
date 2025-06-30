@@ -2,7 +2,6 @@ package com.zefyra.cloud.zefyra_multi_tenancy.config;
 
 
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.DataSourceMultiTenantConnectionProvider;
-import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.TenantIdentifierResolver;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
