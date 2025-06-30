@@ -57,7 +57,7 @@ public class DatasourceUtils {
     public Map<String, DataSource> loadAllTenantDataSources() {
         Map<String, DataSource> dataSources = new HashMap<>();
         loadAllTenants().forEach(tenant ->
-                dataSources.put(tenant.tenantId(), createDataSource(tenant.url(), tenant.username(), tenant.password()))
+                dataSources.put(tenant.tenantId(), createDataSource(tenant))
         );
         return dataSources;
     }
@@ -85,7 +85,7 @@ public class DatasourceUtils {
     public Map<String, DataSource> loadSystemDefaultTenantsDataSources() {
         Map<String, DataSource> dataSources = new HashMap<>();
         loadSystemDefaultTenants().forEach(tenant ->
-                dataSources.put(tenant.tenantId(), createDataSource(tenant.url(), tenant.username(), tenant.password()))
+                dataSources.put(tenant.tenantId(), createDataSource(tenant))
         );
         return dataSources;
     }
@@ -108,7 +108,7 @@ public class DatasourceUtils {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     TenantInfo info = extractTenantInfo(rs);
-                    DataSource ds = createDataSource(info.url(), info.username(), info.password());
+                    DataSource ds = createDataSource(info);
                     return Map.entry(info.tenantId(), ds);
                 } else {
                     throw new IllegalArgumentException("Tenant not found: " + tenantId);
@@ -134,12 +134,20 @@ public class DatasourceUtils {
         );
     }
 
-    private DataSource createDataSource(String url, String username, String password) {
+    public DataSource createDataSource(TenantInfo tenantInfo) {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(url);
-        config.setUsername(username);
-        config.setPassword(password);
+        config.setJdbcUrl(tenantInfo.url);
+        config.setUsername(tenantInfo.username);
+        config.setPassword(tenantInfo.password);
         config.setDriverClassName("org.postgresql.Driver");
+
+        // 🔑 LIMITA IL POOL
+        config.setMaximumPoolSize(5);
+        config.setMinimumIdle(1);
+        config.setIdleTimeout(30_000); // 30 secondi
+
+        config.setPoolName("Tenant-" + tenantInfo.tenantId());
+
         return new HikariDataSource(config);
     }
 

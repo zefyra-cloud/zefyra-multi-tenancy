@@ -44,18 +44,9 @@ public class TenantLiquibaseRunner implements ApplicationRunner {
                             && !id.equalsIgnoreCase(KEYCLOAK.getValue());
                 })
                 .forEach(tenant -> {
-                    DataSource ds = createDataSourceForTenant(tenant);
+                    DataSource ds = datasourceUtils.createDataSource(tenant);
                     runLiquibase(ds);
                 });
-    }
-
-    private DataSource createDataSourceForTenant(DatasourceUtils.TenantInfo tenant) {
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(tenant.url());
-        config.setUsername(tenant.username());
-        config.setPassword(tenant.password());
-        config.setDriverClassName("org.postgresql.Driver");
-        return new HikariDataSource(config);
     }
 
     @SneakyThrows
