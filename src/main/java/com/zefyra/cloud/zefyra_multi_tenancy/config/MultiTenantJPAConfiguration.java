@@ -38,7 +38,7 @@ public class MultiTenantJPAConfiguration {
     private MultiTenantConnectionProvider<String> connectionProvider;
 
     @Bean(name = "multipleDataSources")
-    public Map<String, DataSource> repositoryDataSources() {
+    public Map<Long, DataSource> repositoryDataSources() {
         return dataSourceMultiTenantConnectionProvider.getDataSources().entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,

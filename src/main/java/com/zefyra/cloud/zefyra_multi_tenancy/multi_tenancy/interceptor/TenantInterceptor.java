@@ -1,18 +1,20 @@
 package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.interceptor;
 
 
+import com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantHeader;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.DataSourceMultiTenantConnectionProvider;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util.DatasourceUtils;
 import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util.TenantContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import static com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantEnum.TENANT_HEADER;
+import static com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantHeader.TENANT_HEADER;
 
 @Component
 public class TenantInterceptor implements HandlerInterceptor {
@@ -25,21 +27,22 @@ public class TenantInterceptor implements HandlerInterceptor {
     private DatasourceUtils datasourceUtils;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler)
-            throws Exception {
+    public boolean preHandle(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
 
-        String tenantName = request.getHeader(TENANT_HEADER.getValue());
+        String tenantIdHeader = request.getHeader(TENANT_HEADER.getValue());
 
-        if (tenantName == null || tenantName.isBlank()) {
+        if (tenantIdHeader == null || tenantIdHeader.isBlank()) {
             return true;
         }
 
+        Long tenantId = Long.parseLong(tenantIdHeader);
+
         dataSourceProvider.addDataSourceIfAbsent(
-                tenantName,
-                () -> datasourceUtils.loadTenant(tenantName).getValue()
+                tenantId,
+                () -> datasourceUtils.loadTenant(tenantId).getValue()
         );
 
-        TenantContext.setTenantName(tenantName);
+        TenantContext.setTenantId(tenantId);
         return true;
     }
 

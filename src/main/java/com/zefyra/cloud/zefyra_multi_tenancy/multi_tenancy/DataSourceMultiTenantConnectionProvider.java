@@ -2,7 +2,6 @@ package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy;
 
 import com.zaxxer.hikari.HikariDataSource;
 import com.zefyra.cloud.zefyra_multi_tenancy.config.TenantEvictionProperties;
-import com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -23,10 +22,10 @@ import java.util.function.Supplier;
 @Primary
 @Service
 @Slf4j
-public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceBasedMultiTenantConnectionProviderImpl<String> {
+public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceBasedMultiTenantConnectionProviderImpl<Long> {
 
     @Setter
-    private Map<String, TimedDataSource> dataSources = new ConcurrentHashMap<>();
+    private Map<Long, TimedDataSource> dataSources = new ConcurrentHashMap<>();
 
     @Autowired
     private TenantEvictionProperties evictionProperties;
@@ -40,7 +39,7 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
     }
 
     @Override
-    public DataSource selectDataSource(String tenantIdentifier) {
+    public DataSource selectDataSource(Long tenantIdentifier) {
         TimedDataSource timed = dataSources.get(tenantIdentifier);
         if (timed == null) {
             throw new RuntimeException("Unknown tenant " + tenantIdentifier);
@@ -58,7 +57,7 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
         return ds;
     }
 
-    public void addDataSourceIfAbsent(String tenantId, Supplier<DataSource> supplier) {
+    public void addDataSourceIfAbsent(Long tenantId, Supplier<DataSource> supplier) {
         dataSources.computeIfAbsent(tenantId, id -> {
             log.debug("Creating DataSource for tenant '{}'", id);
             return new TimedDataSource(supplier.get());
@@ -72,7 +71,7 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
         log.info("Running cleanup of unused DataSources...");
 
         dataSources.entrySet().removeIf(entry -> {
-            String tenantId = entry.getKey();
+            Long tenantId = entry.getKey();
             TimedDataSource ds = entry.getValue();
 
             if (isProtectedTenant(tenantId)) return false;
@@ -86,10 +85,10 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
         });
     }
 
-    private boolean isProtectedTenant(String tenantId) {
-        return tenantId.equalsIgnoreCase(TenantEnum.MASTER.getValue()) ||
-                tenantId.equalsIgnoreCase(TenantEnum.SYSTEM.getValue()) ||
-                tenantId.equalsIgnoreCase(TenantEnum.KEYCLOAK.getValue());
+    private boolean isProtectedTenant(Long tenantId) {
+        return tenantId.equals(0L) ||
+                tenantId.equals(1L) ||
+                tenantId.equals(2L);
     }
 
     public static class TimedDataSource {
@@ -113,7 +112,7 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
             if (lastAccess < cutoff) {
                 if (markedForRemoval) {
                     log.debug("DataSource for tenant is marked for removal and last accessed at {} ms ago", System.currentTimeMillis() - lastAccess);
-                    return true; // confermato: possiamo chiudere
+                    return true;
                 } else {
                     log.debug("DataSource for tenant last accessed at {} ms ago, marking for removal", System.currentTimeMillis() - lastAccess);
                     markedForRemoval = true;

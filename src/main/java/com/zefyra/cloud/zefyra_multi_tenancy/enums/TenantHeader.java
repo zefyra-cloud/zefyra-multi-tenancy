@@ -5,11 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum TenantEnum {
-    SYSTEM("system"),
-    MASTER("master"),
-    KEYCLOAK("keycloak"),
-    TENANT_HEADER("TENANT-NAME");
-
+public enum TenantHeader {
+    TENANT_HEADER("X-Tenant-Id");
     private final String value;
 }

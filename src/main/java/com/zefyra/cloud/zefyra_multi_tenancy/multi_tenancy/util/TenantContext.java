@@ -5,13 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class TenantContext {
 
-    private static final ThreadLocal<String> currentTenant = new ThreadLocal<>();
+    private static final ThreadLocal<Long> currentTenant = new ThreadLocal<>();
 
-    public static void setTenantName(String tenantName) {
+    public static void setTenantId(Long tenantName) {
         currentTenant.set(tenantName);
     }
 
-    public static String getTenantName() {
+    public static Long getTenantName() {
         return currentTenant.get();
     }
 

@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.zefyra.cloud.zefyra_multi_tenancy.enums.SystemTenantSchemaEnum.*;
+
 @Service
 public class DatasourceUtils {
 
@@ -37,10 +39,6 @@ public class DatasourceUtils {
     @Value("${tenants.master.schema}")
     private String masterSchema;
 
-    private static final String MASTER_SCHEMA = "master";
-    private static final String SYSTEM_SCHEMA = "system";
-    private static final String KEYCLOAK_SCHEMA = "keycloak";
-
     private static final String COLUMN_TENANT_ID = "tenant_id";
     private static final String COLUMN_URL = "host_url";
     private static final String COLUMN_USERNAME = "username";
@@ -52,15 +50,6 @@ public class DatasourceUtils {
             "SELECT %s, %s, %s, %s FROM %s",
             COLUMN_TENANT_ID, COLUMN_URL, COLUMN_USERNAME, COLUMN_PASSWORD, TABLE_TENANTS
     );
-
-    @SneakyThrows
-    public Map<String, DataSource> loadAllTenantDataSources() {
-        Map<String, DataSource> dataSources = new HashMap<>();
-        loadAllTenants().forEach(tenant ->
-                dataSources.put(tenant.tenantId(), createDataSource(tenant))
-        );
-        return dataSources;
-    }
 
     @SneakyThrows
     public List<TenantInfo> loadAllTenants() throws SQLException {
@@ -82,8 +71,8 @@ public class DatasourceUtils {
     }
 
     @SneakyThrows
-    public Map<String, DataSource> loadSystemDefaultTenantsDataSources() {
-        Map<String, DataSource> dataSources = new HashMap<>();
+    public Map<Long, DataSource> loadSystemDefaultTenantsDataSources() {
+        Map<Long, DataSource> dataSources = new HashMap<>();
         loadSystemDefaultTenants().forEach(tenant ->
                 dataSources.put(tenant.tenantId(), createDataSource(tenant))
         );
@@ -96,7 +85,7 @@ public class DatasourceUtils {
     }
 
     @SneakyThrows
-    public Map.Entry<String, DataSource> loadTenant(String tenantId) {
+    public Map.Entry<Long, DataSource> loadTenant(Long tenantId) {
         String connectionURL = getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, masterSchema);
         String singleQuery = QUERY + " WHERE " + COLUMN_TENANT_ID + " = ?";
 
@@ -104,7 +93,7 @@ public class DatasourceUtils {
                 Connection conn = DriverManager.getConnection(connectionURL, masterUsername, masterPassword);
                 PreparedStatement stmt = conn.prepareStatement(singleQuery)
         ) {
-            stmt.setString(1, tenantId);
+            stmt.setLong(1, tenantId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     TenantInfo info = extractTenantInfo(rs);
@@ -119,15 +108,15 @@ public class DatasourceUtils {
 
     private List<TenantInfo> createDataSourceForZefyraDB() {
         return List.of(
-                new TenantInfo(SYSTEM_SCHEMA, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, SYSTEM_SCHEMA), masterUsername, masterPassword),
-                new TenantInfo(MASTER_SCHEMA, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, MASTER_SCHEMA), masterUsername, masterPassword),
-                new TenantInfo(KEYCLOAK_SCHEMA, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, KEYCLOAK_SCHEMA), masterUsername, masterPassword)
+                new TenantInfo(0L, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, SYSTEM_SCHEMA.getValue()), masterUsername, masterPassword),
+                new TenantInfo(1L, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, MASTER_SCHEMA.getValue()), masterUsername, masterPassword),
+                new TenantInfo(2L, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, KEYCLOAK_SCHEMA.getValue()), masterUsername, masterPassword)
         );
     }
 
     private TenantInfo extractTenantInfo(ResultSet rs) throws SQLException {
         return new TenantInfo(
-                rs.getString(COLUMN_TENANT_ID),
+                rs.getLong(COLUMN_TENANT_ID),
                 rs.getString(COLUMN_URL),
                 rs.getString(COLUMN_USERNAME),
                 rs.getString(COLUMN_PASSWORD)
@@ -155,5 +144,5 @@ public class DatasourceUtils {
         return String.format("%s://%s:%s/%s?currentSchema=%s", jdbcPrefix, host, port, dbName, schema);
     }
 
-    public record TenantInfo(String tenantId, String url, String username, String password) {}
+    public record TenantInfo(Long tenantId, String url, String username, String password) {}
 }

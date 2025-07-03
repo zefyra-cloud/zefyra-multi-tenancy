@@ -23,9 +23,9 @@ public class TenantDataSourceInitializer {
 
     @PostConstruct
     public void loadTenants() {
-        Map<String, DataSource> baseDataSources = datasourceUtils.loadSystemDefaultTenantsDataSources();
+        Map<Long, DataSource> baseDataSources = datasourceUtils.loadSystemDefaultTenantsDataSources();
 
-        Map<String, DataSourceMultiTenantConnectionProvider.TimedDataSource> timedDataSources =
+        Map<Long, DataSourceMultiTenantConnectionProvider.TimedDataSource> timedDataSources =
                 baseDataSources.entrySet().stream()
                         .collect(Collectors.toMap(
                                 Map.Entry::getKey,

@@ -18,8 +18,6 @@ import java.net.URL;
 import java.sql.Connection;
 import java.util.List;
 
-import static com.zefyra.cloud.zefyra_multi_tenancy.enums.TenantEnum.*;
-
 @Component
 @Slf4j
 public class TenantLiquibaseRunner implements ApplicationRunner {
@@ -36,10 +34,10 @@ public class TenantLiquibaseRunner implements ApplicationRunner {
 
         tenants.stream()
                 .filter(t -> {
-                    String id = t.tenantId();
-                    return !id.equalsIgnoreCase(MASTER.getValue())
-                            && !id.equalsIgnoreCase(SYSTEM.getValue())
-                            && !id.equalsIgnoreCase(KEYCLOAK.getValue());
+                    Long id = t.tenantId();
+                    return !id.equals(0L)
+                            && !id.equals(1L)
+                            && !id.equals(2L);
                 })
                 .forEach(tenant -> {
                     DataSource ds = datasourceUtils.createDataSource(tenant);
