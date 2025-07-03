@@ -34,7 +34,7 @@ public class MultiTenantJPAConfiguration {
     private DataSourceMultiTenantConnectionProvider dataSourceMultiTenantConnectionProvider;
 
     @Autowired
-    private MultiTenantConnectionProvider<Long> connectionProvider;
+    private MultiTenantConnectionProvider<String> connectionProvider;
 
     @Bean(name = "multipleDataSources")
     public Map<Long, DataSource> repositoryDataSources() {
@@ -59,8 +59,8 @@ public class MultiTenantJPAConfiguration {
 
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactoryBean(
-            MultiTenantConnectionProvider<String> multiTenantConnectionProvider,
-            CurrentTenantIdentifierResolver<String> currentTenantIdentifierResolver) {
+            MultiTenantConnectionProvider<Long> multiTenantConnectionProvider,
+            CurrentTenantIdentifierResolver<Long> currentTenantIdentifierResolver) {
 
         Map<String, Object> hibernateProperties = new LinkedHashMap<>(this.jpaProperties.getProperties());
         hibernateProperties.put("hibernate.multiTenancy", "DATABASE");
