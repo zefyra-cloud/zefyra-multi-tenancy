@@ -21,7 +21,7 @@ public class Tenant {
 
     @Id
     @Column(name = "tenant_id", nullable = false, updatable = false)
-    private String tenantId;
+    private Long tenantId;
 
     @Column(name = "tenant_name", nullable = false)
     private String tenantName;
