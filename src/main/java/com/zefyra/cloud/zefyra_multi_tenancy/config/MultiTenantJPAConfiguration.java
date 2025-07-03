@@ -34,7 +34,7 @@ public class MultiTenantJPAConfiguration {
     private DataSourceMultiTenantConnectionProvider dataSourceMultiTenantConnectionProvider;
 
     @Autowired
-    private MultiTenantConnectionProvider<String> connectionProvider;
+    private MultiTenantConnectionProvider<Long> connectionProvider;
 
     @Bean(name = "multipleDataSources")
     public Map<Long, DataSource> repositoryDataSources() {
