@@ -86,9 +86,7 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
     }
 
     private boolean isProtectedTenant(Long tenantId) {
-        return tenantId.equals(0L) ||
-                tenantId.equals(1L) ||
-                tenantId.equals(2L);
+        return tenantId.equals(0L);
     }
 
     public static class TimedDataSource {

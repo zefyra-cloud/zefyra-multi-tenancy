@@ -35,9 +35,7 @@ public class TenantLiquibaseRunner implements ApplicationRunner {
         tenants.stream()
                 .filter(t -> {
                     Long id = t.tenantId();
-                    return !id.equals(0L)
-                            && !id.equals(1L)
-                            && !id.equals(2L);
+                    return !id.equals(0L);
                 })
                 .forEach(tenant -> {
                     DataSource ds = datasourceUtils.createDataSource(tenant);
