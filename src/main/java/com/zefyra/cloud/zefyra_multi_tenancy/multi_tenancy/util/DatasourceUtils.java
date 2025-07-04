@@ -2,6 +2,7 @@ package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zefyra.cloud.zefyra_multi_tenancy.enums.SystemTenantSchemaEnum;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -52,8 +53,8 @@ public class DatasourceUtils {
     );
 
     @SneakyThrows
-    public List<TenantInfo> loadAllTenants() throws SQLException {
-        String connectionURL = getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, masterSchema);
+    public List<TenantInfo> loadAllTenants() {
+        String connectionURL = getJdbcUrlWithSchema(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, MASTER_SCHEMA.getValue());
 
         List<TenantInfo> tenantInfos = new ArrayList<>(createDataSourceForZefyraDB());
 
@@ -80,13 +81,13 @@ public class DatasourceUtils {
     }
 
     @SneakyThrows
-    public List<TenantInfo> loadSystemDefaultTenants() throws SQLException {
+    public List<TenantInfo> loadSystemDefaultTenants() {
         return new ArrayList<>(createDataSourceForZefyraDB());
     }
 
     @SneakyThrows
     public Map.Entry<Long, DataSource> loadTenant(Long tenantId) {
-        String connectionURL = getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, masterSchema);
+        String connectionURL = getJdbcUrlWithSchema(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, MASTER_SCHEMA.getValue());
         String singleQuery = QUERY + " WHERE " + COLUMN_TENANT_ID + " = ?";
 
         try (
@@ -108,9 +109,7 @@ public class DatasourceUtils {
 
     private List<TenantInfo> createDataSourceForZefyraDB() {
         return List.of(
-                new TenantInfo(0L, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, SYSTEM_SCHEMA.getValue()), masterUsername, masterPassword),
-                new TenantInfo(1L, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, MASTER_SCHEMA.getValue()), masterUsername, masterPassword),
-                new TenantInfo(2L, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, KEYCLOAK_SCHEMA.getValue()), masterUsername, masterPassword)
+                new TenantInfo(0L, getJdbcUrl(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName), masterUsername, masterPassword)
         );
     }
 
@@ -130,7 +129,6 @@ public class DatasourceUtils {
         config.setPassword(tenantInfo.password);
         config.setDriverClassName("org.postgresql.Driver");
 
-        // 🔑 LIMITA IL POOL
         config.setMaximumPoolSize(5);
         config.setMinimumIdle(1);
         config.setIdleTimeout(30_000); // 30 secondi
@@ -140,7 +138,11 @@ public class DatasourceUtils {
         return new HikariDataSource(config);
     }
 
-    private String getJdbcUrl(String jdbcPrefix, String host, String port, String dbName, String schema) {
+    private String getJdbcUrl(String jdbcPrefix, String host, String port, String dbName) {
+        return String.format("%s://%s:%s/%s", jdbcPrefix, host, port, dbName);
+    }
+
+    private String getJdbcUrlWithSchema(String jdbcPrefix, String host, String port, String dbName, String schema) {
         return String.format("%s://%s:%s/%s?currentSchema=%s", jdbcPrefix, host, port, dbName, schema);
     }
 
