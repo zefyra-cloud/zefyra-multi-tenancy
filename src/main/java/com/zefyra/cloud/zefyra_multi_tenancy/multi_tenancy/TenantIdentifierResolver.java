@@ -9,7 +9,7 @@ public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver
 
     @Override
     public Long resolveCurrentTenantIdentifier() {
-        Long currentTenantName = TenantContext.getTenantName();
+        Long currentTenantName = TenantContext.getTenantId();
         long DEFAULT_TENANT_NAME = 0L;
         return (currentTenantName != null) ? currentTenantName : DEFAULT_TENANT_NAME;
     }

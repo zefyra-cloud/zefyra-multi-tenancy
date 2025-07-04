@@ -11,7 +11,7 @@ public final class TenantContext {
         currentTenant.set(tenantName);
     }
 
-    public static Long getTenantName() {
+    public static Long getTenantId() {
         return currentTenant.get();
     }
 
