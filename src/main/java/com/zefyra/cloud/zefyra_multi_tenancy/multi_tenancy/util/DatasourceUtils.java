@@ -37,9 +37,6 @@ public class DatasourceUtils {
     @Value("${tenants.master.password}")
     private String masterPassword;
 
-    @Value("${tenants.master.schema}")
-    private String masterSchema;
-
     private static final String COLUMN_TENANT_ID = "tenant_id";
     private static final String COLUMN_URL = "host_url";
     private static final String COLUMN_USERNAME = "username";
