@@ -24,17 +24,20 @@ import java.util.List;
 public class TenantLiquibaseRunner implements ApplicationRunner {
 
     @Value("${tenants.liquidbase.enabled:false}")
-    private boolean enabled;
+    private boolean ENABLED;
+
+    @Value("tenants.liquidbase.changeLogPath:db.changelog/db.changelog-master.yaml")
+    private String CHANGELOG_PATH;
+
+    @Value("${tenants.liquidbase.defaultSchema:public}")
+    private String PUBLIC_SCHEMA;
 
     @Autowired
     private DatasourceUtils datasourceUtils;
 
-    private static final String PUBLIC_SCHEMA = "public";
-    private static final String CHANGELOG_PATH = "db.changelog/db.changelog-master.yaml";
-
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        if (!enabled) {
+        if (!ENABLED) {
             log.info("TenantLiquibaseRunner disabilitato via configuration.");
             return;
         }
