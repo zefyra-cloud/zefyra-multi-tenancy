@@ -26,7 +26,7 @@ public class TenantLiquibaseRunner implements ApplicationRunner {
     @Value("${tenants.liquidbase.enabled:false}")
     private boolean ENABLED;
 
-    @Value("tenants.liquidbase.changeLogPath:db.changelog/db.changelog-master.yaml")
+    @Value("${tenants.liquidbase.changeLogPath:db.changelog/db.changelog-master.yaml}")
     private String CHANGELOG_PATH;
 
     @Value("${tenants.liquidbase.defaultSchema:public}")
