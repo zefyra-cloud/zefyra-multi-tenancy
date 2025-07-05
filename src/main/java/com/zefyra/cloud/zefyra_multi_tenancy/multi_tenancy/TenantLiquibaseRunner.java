@@ -23,7 +23,7 @@ import java.util.List;
 @Slf4j
 public class TenantLiquibaseRunner implements ApplicationRunner {
 
-    @Value("${tenant-liquibase-runner.enabled:true}")
+    @Value("${tenants.liquidbase.enabled:false}")
     private boolean enabled;
 
     @Autowired
