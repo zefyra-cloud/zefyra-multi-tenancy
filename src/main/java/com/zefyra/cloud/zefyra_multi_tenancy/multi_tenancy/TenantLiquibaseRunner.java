@@ -9,6 +9,7 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,9 @@ import java.util.List;
 @Slf4j
 public class TenantLiquibaseRunner implements ApplicationRunner {
 
+    @Value("${tenant-liquibase-runner.enabled:true}")
+    private boolean enabled;
+
     @Autowired
     private DatasourceUtils datasourceUtils;
 
@@ -30,13 +34,15 @@ public class TenantLiquibaseRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+        if (!enabled) {
+            log.info("TenantLiquibaseRunner disabilitato via configuration.");
+            return;
+        }
+
         List<DatasourceUtils.TenantInfo> tenants = datasourceUtils.loadAllTenants();
 
         tenants.stream()
-                .filter(t -> {
-                    Long id = t.tenantId();
-                    return !id.equals(0L);
-                })
+                .filter(t -> !t.tenantId().equals(0L))
                 .forEach(tenant -> {
                     DataSource ds = datasourceUtils.createDataSource(tenant);
                     runLiquibase(ds);
