@@ -76,6 +76,10 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
         cleanupEnabled.set(false);
     }
 
+    public boolean containsTenant(Long tenantId) {
+        return dataSources.containsKey(tenantId);
+    }
+
     @Scheduled(fixedDelayString = "${tenants.eviction.cleanupDelayMs}")
     public void cleanupUnusedDataSources() {
         if (!cleanupEnabled.get()) {
