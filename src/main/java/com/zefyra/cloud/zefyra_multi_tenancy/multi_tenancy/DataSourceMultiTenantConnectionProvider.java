@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 @Getter
@@ -26,6 +27,8 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
     @Setter
     private Map<Long, TimedDataSource> dataSources = new ConcurrentHashMap<>();
+
+    private final AtomicBoolean cleanupEnabled = new AtomicBoolean(true);
 
     @Autowired
     private TenantEvictionProperties evictionProperties;
@@ -65,8 +68,21 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
         log.debug("Ensured DataSource for tenant '{}'", tenantId);
     }
 
+    public void enableCleanup() {
+        cleanupEnabled.set(true);
+    }
+
+    public void disableCleanup() {
+        cleanupEnabled.set(false);
+    }
+
     @Scheduled(fixedDelayString = "${tenants.eviction.cleanupDelayMs}")
     public void cleanupUnusedDataSources() {
+        if (!cleanupEnabled.get()) {
+            log.info("Cleanup scheduler is currently disabled.");
+            return;
+        }
+
         long cutoff = System.currentTimeMillis() - evictionProperties.getMaxIdleMinutes() * 60 * 1000;
         log.info("Running cleanup of unused DataSources...");
 

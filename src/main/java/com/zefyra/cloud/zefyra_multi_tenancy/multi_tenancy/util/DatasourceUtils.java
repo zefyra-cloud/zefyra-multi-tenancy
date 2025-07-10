@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.zefyra.cloud.zefyra_multi_tenancy.enums.SystemTenantSchemaEnum.*;
 
@@ -103,6 +104,42 @@ public class DatasourceUtils {
             }
         }
     }
+
+    @SneakyThrows
+    public Map<Long, DataSource> loadTenants(List<Long> tenantIds) {
+        if (tenantIds == null || tenantIds.isEmpty()) {
+            throw new IllegalArgumentException("Tenant IDs list cannot be null or empty");
+        }
+
+        String connectionURL = getJdbcUrlWithSchema(masterJdbcPrefix, masterUrl, masterPort, masterDatabaseName, MASTER_SCHEMA.getValue());
+        String placeholders = tenantIds.stream().map(id -> "?").collect(Collectors.joining(", "));
+        String query = QUERY + " WHERE " + COLUMN_TENANT_ID + " IN (" + placeholders + ")";
+
+        try (
+                Connection conn = DriverManager.getConnection(connectionURL, masterUsername, masterPassword);
+                PreparedStatement stmt = conn.prepareStatement(query)
+        ) {
+            for (int i = 0; i < tenantIds.size(); i++) {
+                stmt.setLong(i + 1, tenantIds.get(i));
+            }
+
+            Map<Long, DataSource> tenantDataSources = new HashMap<>();
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    TenantInfo info = extractTenantInfo(rs);
+                    DataSource ds = createDataSource(info);
+                    tenantDataSources.put(info.tenantId(), ds);
+                }
+            }
+
+            if (tenantDataSources.size() != tenantIds.size()) {
+                throw new IllegalArgumentException("Some tenants not found");
+            }
+
+            return tenantDataSources;
+        }
+    }
+
 
     private List<TenantInfo> createDataSourceForZefyraDB() {
         return List.of(
