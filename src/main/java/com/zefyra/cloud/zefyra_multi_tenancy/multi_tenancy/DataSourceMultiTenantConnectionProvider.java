@@ -2,6 +2,7 @@ package com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy;
 
 import com.zaxxer.hikari.HikariDataSource;
 import com.zefyra.cloud.zefyra_multi_tenancy.config.TenantEvictionProperties;
+import com.zefyra.cloud.zefyra_multi_tenancy.multi_tenancy.util.DatasourceUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,6 +34,9 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
     @Autowired
     private TenantEvictionProperties evictionProperties;
+
+    @Autowired
+    private DatasourceUtils datasourceUtils;
 
     @Override
     public DataSource selectAnyDataSource() {
@@ -78,6 +83,21 @@ public class DataSourceMultiTenantConnectionProvider extends AbstractDataSourceB
 
     public boolean containsTenant(Long tenantId) {
         return dataSources.containsKey(tenantId);
+    }
+
+    public void ensureTenantsLoaded(List<Long> tenantIds) {
+        List<Long> missingTenantIds = tenantIds.stream()
+                .filter(id -> !containsTenant(id))
+                .toList();
+
+        if (!missingTenantIds.isEmpty()) {
+            Map<Long, DataSource> loaded = datasourceUtils.loadTenants(missingTenantIds);
+            loaded.forEach((tenantId, ds) ->
+                    addDataSourceIfAbsent(tenantId, () -> ds)
+            );
+        } else {
+            log.debug("All tenants already loaded: {}", tenantIds);
+        }
     }
 
     @Scheduled(fixedDelayString = "${tenants.eviction.cleanupDelayMs}")
